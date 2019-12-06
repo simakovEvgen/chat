@@ -1,0 +1,132 @@
+<h1 class="mt-4">Dashboard</h1>
+<p class="lead mb-3">Welcome <%= name %> </p>
+<a href="/users/logout" class="btn btn-secondary">Logout</a>
+<style>
+        body {
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+        }
+        #message-container {
+            width: 80%;
+            max-width: 1200px;
+        }
+        #message-container div {
+            background-color: #CCC;
+            padding: 5px;
+        }
+        #message-container div:nth-child(2n) {
+            background-color: #FFF;
+        }
+        #send-container {
+            position: fixed;
+            padding-bottom: 30px;
+            bottom: 0;
+            background-color: white;
+            max-width: 1200px;
+            width: 80%;
+            display: flex;
+        }
+        #message-input {
+            flex-grow: 1;
+        }
+        #userName {
+            visibility: hidden;
+        }
+    </style>
+<div id="message-container"></div>
+<form id="send-container">
+    <input
+            type="text"
+            id="message-input"
+            name="message"
+            placeholder="Enter Message"
+            value="<%= typeof message != 'undefined' ? message : '' %>"
+    >
+    <input
+            type="text"
+            id="userName"
+            name="userName"
+            placeholder="Enter Message"
+            value="<%= typeof name != 'undefined' ? name : '' %>"
+    >
+    <button type="submit" id="send-button">Send</button>
+    <button id="refresh">Show all messages</button>
+</form>
+<script>
+    // Vanilla JS:
+    const messageForm = document.getElementById('send-container')
+    const messageInput = document.getElementById('message-input')
+    const messageContainer = document.getElementById('message-container')
+    const userName = document.getElementById('userName')
+    const refresh = document.getElementById('refresh')
+
+    // Validation
+    messageInput.addEventListener('keypress', e => {
+        console.log("TEST", e.charCode, e.charCode <= 57);
+        if (((65 <= e.charCode) && (e.charCode <= 122)) || ((48 <= e.charCode) && (e.charCode <= 57 ))) {
+            if (e.charCode === 94 || e.charCode === 95 || e.charCode === 96) {
+                e.preventDefault()
+            }
+        } else {
+            e.preventDefault()
+        }
+    })
+
+
+    function appendMessage(message) {
+        const messageElement = document.createElement('div')
+        messageElement.innerText = message
+        messageContainer.append(messageElement)
+    }
+
+    function getAllPosts() {
+        const response =  fetch('http://localhost:3001/users/messages', {
+            method: 'GET'
+        });
+        response.then((res) => res.json()).then((res)=>{
+            console.log(res, 'res')
+
+            messageContainer.innerHTML = '';
+
+            for (let i = 0; i < res.posts.length; i++) {
+                const messageElement = document.createElement('div')
+                const name = res.posts[i].name;
+                const message = res.posts[i].message;
+                messageElement.innerText = `${name}: ${message}`;
+                messageContainer.append((messageElement))
+            }
+        })
+    }
+
+    refresh.addEventListener('click', e => {
+        e.preventDefault();
+        getAllPosts();
+    })
+
+    messageForm.addEventListener('submit', e => {
+        e.preventDefault()
+
+        const message = messageInput.value;
+        const data = JSON.stringify({ message : message, name: userName.value });
+
+        const response =  fetch('http://localhost:3001/users/message', {
+            method: 'POST',
+            body: data,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        response.then((res) => res.json()).then((res)=>{
+            console.log(res, 'reslll')
+
+        })
+
+        appendMessage(`${userName.value}: ${message}`)
+    });
+
+
+
+</script>
+
